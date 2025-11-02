@@ -75,7 +75,7 @@ We return a dict like:
 
 ## 4) Setup & Limitations
 
-**Requirements (Python 3.10+ recommended)**
+**Requirements (Python 3.11+)**
 
 ```bash
 pip install -r requirements.txt
