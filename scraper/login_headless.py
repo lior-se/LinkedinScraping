@@ -35,7 +35,7 @@ def login(email: str, password: str, *, headless: bool=False, state_file: str="l
             page.fill("#username", email)
             page.fill("#password, #session_password", password)
             page.click('button[data-litms-control-urn="login-submit"], button[type="submit"]')
-            page.wait_for_timeout(5000)
+            page.wait_for_timeout(2000)
             page.goto("https://www.linkedin.com/feed/", wait_until="domcontentloaded", timeout=30_000)
             if "/login" in page.url:
                 print("Still on login")
