@@ -11,15 +11,20 @@
 - **Make JSON inputs** — one JSON per source image (name inferred from filename).  
   `utils/make_persons_jsons.py`
 
-- **Login** — Connects to LinkedIn and saves a `login_state.json` for LinkedIn session reuse.  
-  `scraper/login_headless.py`
+### There are two flows for scraping images:
+**Google image scraping flow:**
+- **Search & collect candidates** — opens Google images results for `"Full Name site:linkedin.com/in"`, extract profile URLs, pictures and names
+  `scraper/scrape_from_GImages.py`
 
-- **Search & collect candidates** — opens DuckDuckGo HTML results for `"Full Name site:linkedin.com/in"`, extract profile URLs  
+**ALTERNATIVE: Full resolution scraping flow**
+ - Login — Connects to LinkedIn and saves a `login_state.json` for LinkedIn session reuse.  
+  `scraper/login_headless.py`
+ - Search & collect candidates — opens DuckDuckGo HTML results for `"Full Name site:linkedin.com/in"`, extract profile URLs  
   `scraper/scrape_links.py`
-[]()
-- **Download profile images** — visits each LinkedIn profile, opens the photo modal, and saves the full-size image (or marks `no_image`).  
+  - Download profile images — visits each LinkedIn profile, opens the photo modal, and saves the full-size image (or marks `no_image`).  
   `scraper/scrape_profile_photos_simple.py`
 
+### Then:
 - **Match** — for each candidate, computes face similarity vs the source image, then picks the highest-score candidate and checks if it's the same name.  
   If the name is close output says `"Probable Match(Fuzzy Name)"`  
   `matcher.py`
@@ -83,7 +88,7 @@ playwright install
 ```
 **Credentials**
 
-Create a **`.env`**
+Create a **`.env`** (only necessary in full-picture mode)
 
 ```dotenv
 LINKEDIN_EMAIL=you@example.com
@@ -92,20 +97,27 @@ LINKEDIN_PASSWORD=********
 
 Since LinkedIn has rate limitations and really strict research,
 (For example, missing one letter and the user is not foundable anymore)
-we use duckduckGo HTML search since it rarely asks for CAPTCHA solving.
+we use Google images or duckduckGo HTML search since it rarely asks for CAPTCHA solving.
 
 ## Run :
 ```python main.py --src-dir SrcDir```
 
-Options (what each flag adds/changes):
-
+### Options (what each flag adds/changes):
+General\
 ```--src-dir PATH``` — where your source face images live. Default: Source
 
 ```--persons-dir PATH``` — where per-person JSONs are written/loaded. Default: Persons_JSONS
 
-```--state PATH``` — Chromium/LinkedIn session state file. Default: login_state.json
+```--output PATH``` — write final aggregated results here. Default: output.json
+
 
 ```--headless``` — run the browser headless (omit for a visible window).
+
+Default flow - Google Images scraping\
+```--gimages-limit INT``` — max profiles to collect per person. Default: 10
+
+Full-pictures flow - Linkedin login + max-size photos\
+```--full-pictures``` — switch to the LinkedIn flow (requires login).
 
 ```--email EMAIL``` — LinkedIn login; falls back to LINKEDIN_EMAIL env var.
 
@@ -117,7 +129,8 @@ Options (what each flag adds/changes):
 
 ```--photos-delay FLOAT``` — delay between photo grabs (seconds). Default: 0.9
 
-```--output PATH``` — write final aggregated results here. Default: output.json
+```--state PATH``` — Chromium/LinkedIn session state file. Default: login_state.json
+
 
 ## 5) LLM disclosure
 
@@ -132,7 +145,8 @@ All core architecture, matching logic, and integration choices are my own, and t
 ├── scraper/
 │   ├── login_headless.py
 │   ├── scrape_links.py
-│   └── scrape_profile_photos_simple.py
+│   ├── scrape_profile_photos_simple.py
+│   └── scrape_from_GImages.py
 ├── face_recognize/
 │   └── face_compare.py
 ├── utils/
@@ -143,4 +157,15 @@ All core architecture, matching logic, and integration choices are my own, and t
 ├── Persons_JSONS/
 └── Persons_photos/
 ```
+
+## 7)Notes
+
+The Google image scraping flow has been added and set as the default for a few practical reasons:
+
+- Signing into a LinkedIn account adds traceability to all the searches.
+- At scale, opening each LinkedIn profile is slow and can trigger botting/ban risk since it's not allowed by LinkedIn.
+- This flow is simpler and faster overall.
+- The thumbnail size is good enough to tell if it’s the right person for our matcher.
+- Images are already base64 in the page, so we decode them directly, no extra download step.
+- No need for an `.env` or managing LinkedIn credentials.
 
