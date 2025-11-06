@@ -24,3 +24,22 @@ def is_exact_name(a: str, b: str) -> bool:
     Exact equality after normalization.
     """
     return normalize_name(a) == normalize_name(b)
+
+
+def cli():
+    import argparse
+
+    ap = argparse.ArgumentParser(description="Name matcher quick test")
+    ap.add_argument("a", help="First name string")
+    ap.add_argument("b", help="Second name string")
+    args = ap.parse_args()
+
+    sim = name_similarity(args.a, args.b)
+    exact = is_exact_name(args.a, args.b)
+
+    print(f"similarity: {sim}")
+    print(f"exact: {exact}")
+
+
+if __name__ == "__main__":
+    cli()

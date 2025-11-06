@@ -202,7 +202,7 @@ def scrape_linkedin_images_into_json(json_path: str | Path, *,
             browser.close()
             return 0
 
-        # Collect a bit more than limit, we'll filter/skip dupes later naturally
+        # Collect a bit more than limit, we'll filter/skip dupes later
         cards = _collect_by_forward_scan_python(page, max_collect=limit * 5)
 
         seen_profiles = set()
